@@ -1,0 +1,175 @@
+<% layout('layouts/boilerplate') %>
+
+    <div id="map" style="height: 500px; width: 100%; margin-bottom: 2rem;"></div>
+
+
+    <% layout("/layouts/boilerplate") %>
+
+
+        <!-- <h3>All Listings</h3>
+
+            <div class="row row-cols-lg-3 row-cols-md-2 row-cols-sm-1">
+                <% for (let listing of campgrounds) { %>
+                    <div class="card col">
+                        <a href="/listings/<%= listing._id %>" class="listing-link">
+                            <img src="<%= listing.image[0].url %>" class="card-img-top" alt="Listing image"
+                                style="height: 20rem">
+                            <div class="card-img-overlay"></div>
+                            <div class="card-body">
+                                <p class="card-text">
+                                    <b>
+                                        <%= listing.title %>
+                                    </b><br>
+                                    <%= listing.price %> /night
+                                </p>
+                            </div>
+                        </a>
+                    </div>
+                    <% } %>
+            </div> -->
+
+
+
+        <div class="container my-4">
+            <h1 class="mb-4">All Campgrounds</h1>
+            <% for (const campground of campgrounds) { %>
+                <div class="card mb-3">
+                    <div class="row g-0">
+                        <div class="col-md-4">
+                            <% if (campground.image.length) { %>
+                                <img src="<%= campground.image[0].url %>" alt="Campground Image"
+                                    class="img-fluid rounded-start">
+                                <% } else { %>
+                                    <img src="https://res.cloudinary.com/dnz2wikje/image/upload/v1735457330/yelpcamp/mxfimssdlwo9ypercnoo.png"
+                                        alt="Default Image" class="img-fluid rounded-start">
+                                    <% } %>
+                        </div>
+                        <div class="col-md-8">
+                            <div class="card-body">
+                                <h5 class="card-title">
+                                    <%= campground.title %>
+                                </h5>
+                                <p class="card-text">
+                                    <%= campground.description %>
+                                </p>
+                                <p class="card-text"><small class="text-muted">
+                                        <%= campground.location %>
+                                    </small></p>
+                                <a href="/campground/<%= campground._id %>" class="btn btn-primary">View <%=
+                                        campground.title %></a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <% } %>
+        </div>
+
+        <script>
+            const maptilerApiKey = '<%- process.env.MAPTILER_API_KEY %>';
+            const campgrounds = { features: '<% - JSON.stringify(campgrounds) %>' };
+
+            maptilersdk.config.apiKey = maptilerApiKey;
+
+            const map = new maptilersdk.Map({
+                container: 'map',
+                style: maptilersdk.MapStyle.BRIGHT,
+                center: [-103.59179687498357, 40.66995747013945],
+                zoom: 3
+            });
+
+            map.on('load', function () {
+                map.addSource('campgrounds', {
+                    type: 'geojson',
+                    data: campgrounds,
+                    cluster: true,
+                    clusterMaxZoom: 14,
+                    clusterRadius: 50
+                });
+
+                map.addLayer({
+                    id: 'clusters',
+                    type: 'circle',
+                    source: 'campgrounds',
+                    filter: ['has', 'point_count'],
+                    paint: {
+                        'circle-color': [
+                            'step',
+                            ['get', 'point_count'],
+                            '#00BCD4',
+                            10,
+                            '#2196F3',
+                            30,
+                            '#3F51B5'
+                        ],
+                        'circle-radius': [
+                            'step',
+                            ['get', 'point_count'],
+                            15,
+                            10,
+                            20,
+                            30,
+                            25
+                        ]
+                    }
+                });
+
+                map.addLayer({
+                    id: 'cluster-count',
+                    type: 'symbol',
+                    source: 'campgrounds',
+                    filter: ['has', 'point_count'],
+                    layout: {
+                        'text-field': '{point_count_abbreviated}',
+                        'text-font': ['DIN Offc Pro Medium', 'Arial Unicode MS Bold'],
+                        'text-size': 12
+                    }
+                });
+
+                map.addLayer({
+                    id: 'unclustered-point',
+                    type: 'circle',
+                    source: 'campgrounds',
+                    filter: ['!', ['has', 'point_count']],
+                    paint: {
+                        'circle-color': '#11b4da',
+                        'circle-radius': 4,
+                        'circle-stroke-width': 1,
+                        'circle-stroke-color': '#fff'
+                    }
+                });
+
+                map.on('click', 'clusters', async (e) => {
+                    const features = map.queryRenderedFeatures(e.point, {
+                        layers: ['clusters']
+                    });
+                    const clusterId = features[0].properties.cluster_id;
+                    const zoom = await map.getSource('campgrounds').getClusterExpansionZoom(clusterId);
+                    map.easeTo({
+                        center: features[0].geometry.coordinates,
+                        zoom
+                    });
+                });
+
+                map.on('click', 'unclustered-point', (e) => {
+                    const { popUpMarkup = 'No information available' } = e.features[0].properties;
+                    const coordinates = e.features[0].geometry.coordinates.slice();
+
+                    while (Math.abs(e.lngLat.lng - coordinates[0]) > 180) {
+                        coordinates[0] += e.lngLat.lng > coordinates[0] ? 360 : -360;
+                    }
+
+                    new maptilersdk.Popup()
+                        .setLngLat(coordinates)
+                        .setHTML(popUpMarkup)
+                        .addTo(map);
+                });
+
+                map.on('mouseenter', 'clusters', () => {
+                    map.getCanvas().style.cursor = 'pointer';
+                });
+
+                map.on('mouseleave', 'clusters', () => {
+                    map.getCanvas().style.cursor = '';
+                });
+            });
+        </script>

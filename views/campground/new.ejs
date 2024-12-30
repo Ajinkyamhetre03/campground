@@ -1,0 +1,65 @@
+<% layout('layouts/boilerplate') %>
+
+  <div class="container d-flex justify-content-center align-items-center" style="min-height: 100vh;">
+    <div class="col-md-6 col-lg-5">
+      <h1 class="text-center mb-4">Add New Campground</h1>
+
+      <form action="/campground" method="POST" class="needs-validation" novalidate enctype="multipart/form-data">
+        <!-- Title -->
+        <div class="mb-3">
+          <label for="title" class="form-label">Campground Title</label>
+          <input type="text" class="form-control" id="title" name="title" placeholder="Enter campground title" required>
+          <div class="invalid-feedback">
+            Please provide a campground title.
+          </div>
+        </div>
+
+        <!-- Location -->
+        <div class="mb-3">
+          <label for="location" class="form-label">Location</label>
+          <input type="text" class="form-control" id="location" name="location" placeholder="Enter location" required>
+          <div class="invalid-feedback">
+            Please provide a location.
+          </div>
+        </div>
+
+        <!-- Image URL -->
+        <div class="mb-3">
+          <label for="formFileMultiple" class="form-label">Multiple files input example</label>
+          <input class="form-control" type="file" name="image" id="formFileMultiple" multiple>
+        </div>
+
+
+        <!-- Price -->
+        <div class="md-6">
+          <label for="price" class="form-label">Price</label>
+          <div class="input-group has-validation">
+            <span class="input-group-text" id="price">$</span>
+            <input type="number" class="form-control" id="price" name="price" aria-describedby="inputGroupPrepend"
+              required>
+            <div class="invalid-feedback">
+              Please provide a valid price.
+            </div>
+          </div>
+        </div>
+
+        <!-- Description -->
+        <div class="mb-3">
+          <label for="description" class="form-label">Description</label>
+          <textarea class="form-control" id="description" name="description" rows="4"
+            placeholder="Enter campground description" required></textarea>
+          <div class="invalid-feedback">
+            Please provide a description.
+          </div>
+        </div>
+
+        <!-- Submit Button -->
+        <button type="submit" class="btn btn-primary w-100">Add Campground</button>
+      </form>
+
+      <!-- Back to Campgrounds Button -->
+      <div class="mt-3 text-center">
+        <a href="/campground" class="btn btn-secondary">Back to Campgrounds</a>
+      </div>
+    </div>
+  </div>
